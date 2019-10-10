@@ -1,7 +1,7 @@
 ---
 title: "Homework 1 Suglia"
 author: "Elena Suglia"
-date: "10/9/2019"
+date: "10/15/2019"
 output: pdf_document
 ---
 
@@ -9,15 +9,42 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Question 1
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Load the data set “CO2_HW1.txt”, which describes the CO2 uptake rates of plants of the grass species Echinochloa crus-galli from Quebec and Mississippi. 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r, include = FALSE}
+library(tidyverse)
 
-```{r cars}
-summary(cars)
 ```
+
+```{r, message = FALSE}
+d = read_table2("CO2_HW1.txt", col_names = TRUE)
+d = as_tibble(d)
+```
+
+Using a linear model for the analysis, investigate these questions:
+
+How does the air concentration of CO2 (“logconc”) affect a grass plant’s CO2 uptake rate (“uptake”)?
+Does this effect depend on the origin of the plant (“Type”)?
+
+In your answer, include some information on:
+What transformations if any you made on the data and why.
+What steps you took to check model assumptions and model performance. 
+What the coefficients of the model are and how you interpret them. 
+
+## Question 2
+
+Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are:
+sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
+earlylfno: count of leaves early in the plant’s growth
+totallfno: count of total leaves at end of experiment
+ffdate: date of first flowering in days after germination
+
+Fit a normal distribution to the Erodium ffdate data. Also fit a gamma distribution – does this distribution fit the data better or worse than the normal distribution does? Which is “better” by AIC score, or they both about the same? 
+
+Calculate the log-likelihood for the normal distribution at the fitted values of the parameters. Show (graphically or in numbers) that the log-likelihood of the data becomes more negative if you shift the mean parameter value away from its maximum-likelihood value.
+
 
 ## Including Plots
 
