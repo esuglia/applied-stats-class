@@ -23,18 +23,22 @@ hist(radon$y)
 boxplot(y~county, radon)
 stripplot(county~y, data=radon, scales=list(cex=0.5))
 # what does this tell us about where the variation is (within counties? among counties?). What does it reveal about the sample sizes?  
+# more variation within than between counties
+# there are some counties that have far greater sample sizes
 
 # To look at the distribution of sample sizes for all the counties, we could do this:
 hist(tabulate(radon$county), col="ivory1")
 # Or this as a more community-ecology oriented display:
 plot(rev(sort(tabulate(radon$county))), ylab="Sample size", xlab="County ranked by sample size", pch=16, col="darkgoldenrod2")
 # Is the sampling balanced? 
+# no
 
 # Let's compare alternative ways to analyze these data:
 # a) complete pooling, no grouping variable (just ignore the fact there are groups)
 
 m1 <- lm(y~x, radon)
 display(m1)
+# more radon in the basement (neg correl b/w radon meas & floor 0/1)
 
 # We can check out the residuals to see if there's any obvious structure in them:
 plot(resid(m1), pch=16, col="cadetblue4")
@@ -46,6 +50,7 @@ boxplot(resid(m1)~county, data=radon)
 
 m2 <- lm(y~x+county, radon)
 summary(m2)
+display(m2)
 # This is clearly a better-fitting model. Some of the county basement radon estimates (intercept plus county effect) are large and significant, though most are not.
 plot(coef(m2))
 # One thing to notice is that some of the biggest estimated county effects are from counties with small sample sizes. County "LAC QUI PARLE" with the largest coefficient has only 2 data points! 

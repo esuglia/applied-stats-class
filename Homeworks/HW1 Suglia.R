@@ -8,6 +8,11 @@ library(lattice)
 library(vioplot)
 library(lme4)
 library(arm)
+library(bbmle) # Ben Bolker's library of mle functions
+library(MASS)
+
+# Question 1 ----
+
 #d = read_table2("CO2_HW1.txt", col_names = TRUE)
 #d = as_tibble(d)
 
@@ -60,4 +65,55 @@ m1 = lm(uptake~logconc*Type, d)
 summary(m1)
 display(m1)
 
+# Question 2 ----
+
+# Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are: 
+# sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
+# earlylfno: count of leaves early in the plant’s growth
+# totallfno: count of total leaves at end of experiment
+# ffdate: date of first flowering in days after germination
+
+ec = read.table("ecdata_HW1.txt", header = TRUE)
+head(ec)
+class(ec)
+str(ec)
+
+# Fit a normal distribution to the Erodium ffdate data. Also fit a gamma distribution – does this distribution fit the data better or worse than the normal distribution does? Which is “better” by AIC score, or they both about the same? 
+
+# normal distribution ----
+
+mean.ff = mean(ec$ffdate)
+sigma.ff = sd(ec$ffdate)
+
+m1ec = mle2(ffdate~dnorm(mean=mean.ff, sd=sigma.ff), data=ec, start=list(mu=10, sigma=1))
+#m1ec = fitdistr(ec$ffdate, densfun = "normal")
+summary(m1ec)
+
+# gamma distribution ----
+
+# define the Gamma negative log-likelihood
+
+gammaNLL1 <- function(shape, scale) { 
+  return(-sum(dgamma(ec$ffdate, shape=shape, scale=scale, log=T)))
+}
+
+# We can look up the gamma distribution and see what its moments are to get starting values
+shape.start <- mean(ec$ffdate)^2 / var(ec$ffdate)
+scale.start <- var(ec$ffdate) / mean(ec$ffdate)
+
+m2ec <- mle2(gammaNLL1, start=list(shape=shape.start, scale=scale.start), trace=T)
+summary(m2ec)
+
+AIC(m1ec, m2ec)
+# normal distribution fits better
+
+# Calculate the log-likelihood for the normal distribution at the fitted values of the parameters. Show (graphically or in numbers) that the log-likelihood of the data becomes more negative if you shift the mean parameter value away from its maximum-likelihood value.
+
+# calculate the log-likelihood ----
+
+logLik(m1ec) # -2100.618 # higher likelihood
+logLik(m2ec) # -2110.891
+
+m3ec = mle2(ffdate~dnorm(mean=40, sd=sigma.ff), data=ec, start=list(mu=10, sigma=1))
+logLik(m3ec) # -2440.377
 

@@ -9,19 +9,28 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Question 1
+# Question 1
 
 Load the data set “CO2_HW1.txt”, which describes the CO2 uptake rates of plants of the grass species Echinochloa crus-galli from Quebec and Mississippi. 
 
 ```{r, include = FALSE}
 library(tidyverse)
-
+library(tidyverse)
+library(dplyr)
+library(lattice)
+library(vioplot)
+library(lme4)
+library(arm)
 ```
 
 ```{r, message = FALSE}
-d = read_table2("CO2_HW1.txt", col_names = TRUE)
-d = as_tibble(d)
+d = read.table("CO2_HW1.txt", header = TRUE)
+# Check the loaded data
+head(d)
+
 ```
+
+- Looks like it loaded correctly
 
 Using a linear model for the analysis, investigate these questions:
 
@@ -33,13 +42,118 @@ What transformations if any you made on the data and why.
 What steps you took to check model assumptions and model performance. 
 What the coefficients of the model are and how you interpret them. 
 
-## Question 2
+## Check structure of data frame
+
+```{r, message = FALSE}
+class(d) # data.frame
+str(d) # structure of the dataframe and data types in each column
+```
+
+- Everything looks good
+
+## Visual checks for normality/distribution of the data
+
+### Histogram
+
+```{r, message = FALSE}
+hist(d$logconc)
+```
+
+### Normal Q-Q plot
+
+```{r, message = FALSE}
+qqnorm(d$logconc, main = "Normal Q-Q plot", xlab = "Theoretical quantiles", ylab = "Sample quantiles")
+```
+
+- Data does not appear to follow a normal distribution
+- Skewed to the left based on histogram or perhaps overdispersed based on Q-Q plot
+
+## Violin plots to look at the spread of the data
+
+### First, look at spread of log concentration of CO2 uptake
+
+
+```{r, message = FALSE}
+ggplot(d, aes(x=Type, y=logconc)) + geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), aes(fill=Type))
+```
+
+- These plots tell us that there is virtually no difference in spread of log concentration of CO2 between the 2 sites
+
+### Now, let's look at the spread of the response variable, CO2 uptake rate
+
+```{r, message = FALSE}
+ggplot(d, aes(x=Type, y=uptake)) + geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), aes(fill=Type))
+```
+
+- There is definitely a difference in CO2 uptake rates between sites (higher uptake rates in Quebec)
+
+## Relationship between response and explanatry variables: Scatter plot of the log CO2 concentration versus the rate of CO2 uptake
+
+```{r, message = FALSE}
+ggplot(d, aes(x=logconc, y=uptake, group = Type, color = Type)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+ggtitle("log CO2 concentration vs CO2 uptake rate") +
+  xlab("log CO2 concentration") +
+  ylab("CO2 uptake rate")
+```
+
+Higher log CO2 concentration appears positively correlated with uptake rate. There are higher overall uptake rates in Quebec. Here, you are able to see that there appears to be an interaction between location and response to CO2 concentration: Quebec plants increase their CO2 uptake rates more in response to an increase in log CO2 concentration than Mississippi plants do. Thus, the relationship between log CO2 concentration and uptake depends on location, or in other words, the association between the response and the explanatory variables depends on the level of a third variable.
+
+## Fit model
+
+### Let's compare model fit between several different models: one that has one explanatory variable (uptake rate), one that accounts for location, and one that has an interaction between uptake rate and location.
+
+Only looks at relationship between log concentration CO2 and CO2 uptake rate
+
+```{r, message = FALSE}
+m1 = lm(uptake~logconc, d)
+display(m1)
+```
+
+Accounts for location
+
+```{r, message = FALSE}
+m2 = lm(uptake~logconc + Type, d)
+display(m2)
+```
+
+Includes interaction between uptake rate and location
+
+```{r, message = FALSE}
+m3 = lm(uptake~logconc*Type, d)
+display(m3)
+```
+
+The model that includes the interaction between uptake rate and location has the best fit: its residual standard deviation is lowest and the R-squared value is highest (this model explains the most variation in the response variable).
+
+# put here your interpretation of the coefficients of the model
+
+## Assumptions of a linear regression model
+
+- Validity - our question is simply about the effects of one variable on the other; so in this case the regression model seems to be a valid test of this
+- Linearity - relationships look fairly linear on the scatterplot
+- Independence of errors
+- Equal variance of errors
+- Normality of errors
+
+## Add in a test of model fit: fitted vs observed residuals and a Q-Q plot
+### Script 2 has some useful code
+
+## Should we do any centering and standardization? P. 55 of G&H says it's especially useful when there are interactions
+
+# Question 2
 
 Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are:
 sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
 earlylfno: count of leaves early in the plant’s growth
 totallfno: count of total leaves at end of experiment
 ffdate: date of first flowering in days after germination
+
+``` {r, message=FALSE}
+ec = read.table("ecdata_HW1.txt")
+```
 
 Fit a normal distribution to the Erodium ffdate data. Also fit a gamma distribution – does this distribution fit the data better or worse than the normal distribution does? Which is “better” by AIC score, or they both about the same? 
 

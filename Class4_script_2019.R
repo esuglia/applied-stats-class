@@ -7,7 +7,6 @@ library(bbmle) # Ben Bolker's library of mle functions
 library(emdbook) # contains the myxomitosis data set we will use
 library(MASS); library(lattice)
 
-
 #### PART 1: To work through together as a class with projector ####
 #   Implementing Bolker's tadpole example of a binomial likelihood
 
