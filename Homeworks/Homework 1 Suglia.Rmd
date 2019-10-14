@@ -237,7 +237,7 @@ logLik(m2ec) # -2110.891
 ```
 
 
-As expected, the log-likelihood for the better fitting model (m2ec) is higher.
+As expected, the log-likelihood for the better fitting model (m2ec) is maximized (the negative log likelihood is minimized).
 
 ### Shift the mean parameter to 40:
 
