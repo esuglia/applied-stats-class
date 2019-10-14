@@ -9,38 +9,38 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Question 1
+# **Question 1**
 
-Load the data set “CO2_HW1.txt”, which describes the CO2 uptake rates of plants of the grass species Echinochloa crus-galli from Quebec and Mississippi. 
+*Load the data set “CO2_HW1.txt”, which describes the CO2 uptake rates of plants of the grass species Echinochloa crus-galli from Quebec and Mississippi.*
 
 ```{r, include = FALSE}
-library(tidyverse)
 library(tidyverse)
 library(dplyr)
 library(lattice)
 library(vioplot)
 library(lme4)
 library(arm)
+library(bbmle) # Ben Bolker's library of mle functions
+library(MASS)
 ```
 
 ```{r, message = FALSE}
 d = read.table("CO2_HW1.txt", header = TRUE)
 # Check the loaded data
 head(d)
-
 ```
 
 - Looks like it loaded correctly
 
-Using a linear model for the analysis, investigate these questions:
+*Using a linear model for the analysis, investigate these questions:*
 
-How does the air concentration of CO2 (“logconc”) affect a grass plant’s CO2 uptake rate (“uptake”)?
-Does this effect depend on the origin of the plant (“Type”)?
+*How does the air concentration of CO2 (“logconc”) affect a grass plant’s CO2 uptake rate (“uptake”)?*
+*Does this effect depend on the origin of the plant (“Type”)?*
 
-In your answer, include some information on:
-What transformations if any you made on the data and why.
-What steps you took to check model assumptions and model performance. 
-What the coefficients of the model are and how you interpret them. 
+*In your answer, include some information on:*
+*What transformations if any you made on the data and why.*
+*What steps you took to check model assumptions and model performance.*
+*What the coefficients of the model are and how you interpret them.*
 
 ## Check structure of data frame
 
@@ -65,8 +65,7 @@ hist(d$logconc)
 qqnorm(d$logconc, main = "Normal Q-Q plot", xlab = "Theoretical quantiles", ylab = "Sample quantiles")
 ```
 
-- Data does not appear to follow a normal distribution
-- Skewed to the left based on histogram or perhaps overdispersed based on Q-Q plot
+- It's not perfectly normal but it's the best it's going to get; the data has already been transformed and I can't find a different or additional one that would make it any better
 
 ## Violin plots to look at the spread of the data
 
@@ -126,9 +125,7 @@ m3 = lm(uptake~logconc*Type, d)
 display(m3)
 ```
 
-The model that includes the interaction between uptake rate and location has the best fit: its residual standard deviation is lowest and the R-squared value is highest (this model explains the most variation in the response variable).
-
-# put here your interpretation of the coefficients of the model
+The model that includes the interaction between uptake rate and location has the best fit: its residual standard deviation is lowest and the R-squared value is highest (this model explains the most variation in the response variable). This makes sense based on our observation above that the relationship between log CO2 concentration and uptake rate depends on location. 
 
 ## Assumptions of a linear regression model
 
@@ -138,34 +135,117 @@ The model that includes the interaction between uptake rate and location has the
 - Equal variance of errors
 - Normality of errors
 
-## Add in a test of model fit: fitted vs observed residuals and a Q-Q plot
-### Script 2 has some useful code
+Let's look at the error distribution in the best fit model (m3) to test the last three assumptions:
 
-## Should we do any centering and standardization? P. 55 of G&H says it's especially useful when there are interactions
+```{r, message = FALSE}
+par(mfrow=c(2, 1), mar=rep(3,4), mgp=c(2,1,0))
+plot(m3, which=1:2)
+```
 
-# Question 2
+- These assumptions do not appear to be badly violated
 
-Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are:
-sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
-earlylfno: count of leaves early in the plant’s growth
-totallfno: count of total leaves at end of experiment
-ffdate: date of first flowering in days after germination
+## Interpreting the coefficients of the model
+
+### It's often easier to interpret coefficients of a model when you center and scale the data, especially when there are interactions. Let's do that here:
+
+```{r, message = FALSE}
+d.center <- mutate(d, logconc = scale(logconc, center=TRUE, scale=TRUE))
+```
+
+
+### Then we can repeat the same regression and compare 
+
+```{r, message = FALSE}
+m4 <- lm(uptake~logconc*Type, d.center)
+display(m3)
+display(m4)
+```
+
+
+```{r, message = FALSE}
+ggplot(d.center, aes(x=logconc, y=uptake, group = Type, color = Type)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+  ggtitle("log CO2 concentration vs CO2 uptake rate") +
+  xlab("centered and scaled log CO2 concentration") +
+  ylab("CO2 uptake rate")
+```
+
+
+# put here your interpretation of the coefficients of the model
+
+# **Question 2**
+
+*Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are:*
+*- sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine*
+*- earlylfno: count of leaves early in the plant’s growth*
+*- totallfno: count of total leaves at end of experiment*
+*- ffdate: date of first flowering in days after germination*
 
 ``` {r, message=FALSE}
-ec = read.table("ecdata_HW1.txt")
+ec = read.table("ecdata_HW1.txt", header = TRUE)
 ```
 
-Fit a normal distribution to the Erodium ffdate data. Also fit a gamma distribution – does this distribution fit the data better or worse than the normal distribution does? Which is “better” by AIC score, or they both about the same? 
+*Fit a normal distribution to the Erodium ffdate data. Also fit a gamma distribution – does this distribution fit the data better or worse than the normal distribution does? Which is “better” by AIC score, or they both about the same?*
 
-Calculate the log-likelihood for the normal distribution at the fitted values of the parameters. Show (graphically or in numbers) that the log-likelihood of the data becomes more negative if you shift the mean parameter value away from its maximum-likelihood value.
+## Normal distribution
 
+```{r, message = FALSE}
+mean.ff = mean(ec$ffdate)
+sigma.ff = sd(ec$ffdate)
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+m1ec = mle2(ffdate~dnorm(mean=mean.ff, sd=sigma.ff), data=ec, start=list(mu=10, sigma=1))
+summary(m1ec)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Gamma distribution
+
+### Define the Gamma negative log-likelihood
+
+```{r, message = FALSE}
+gammaNLL1 <- function(shape, scale) { 
+  return(-sum(dgamma(ec$ffdate, shape=shape, scale=scale, log=T)))
+}
+```
+
+### Look up the gamma distribution and see what its moments are to get starting values:
+
+```{r, message = FALSE}
+shape.start <- mean(ec$ffdate)^2 / var(ec$ffdate)
+scale.start <- var(ec$ffdate) / mean(ec$ffdate)
+
+m2ec <- mle2(gammaNLL1, start=list(shape=shape.start, scale=scale.start), trace=T)
+summary(m2ec)
+```
+
+## Now compare models:
+
+```{r, message = FALSE}
+AIC(m1ec, m2ec)
+```
+
+- Normal distribution fits better
+
+*Calculate the log-likelihood for the normal distribution at the fitted values of the parameters. Show (graphically or in numbers) that the log-likelihood of the data becomes more negative if you shift the mean parameter value away from its maximum-likelihood value.*
+
+### Calculate the log-likelihood ----
+
+```{r, message = FALSE}
+logLik(m1ec) # -2100.618
+logLik(m2ec) # -2110.891
+```
+
+
+As expected, the log-likelihood for the better fitting model (m2ec) is higher.
+
+### Shift the mean parameter to 40:
+
+```{r, message = FALSE}
+m3ec = mle2(ffdate~dnorm(mean=40, sd=sigma.ff), data=ec, start=list(mu=10, sigma=1))
+logLik(m3ec) # -2440.377
+```
+
+
+Log-likelihood goes down to -2440.377.
+

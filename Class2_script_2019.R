@@ -3,10 +3,6 @@
 
 #### Setup ####
 
-install.packages("lme4")
-install.packages("arm")
-install.packages("viridis")
-
 library(dplyr)
 library(lattice)
 library(lme4)

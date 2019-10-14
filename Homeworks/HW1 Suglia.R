@@ -60,18 +60,67 @@ coplot(uptake~logconc|Type, d)
 # Validity - seems to be a valid test
 # Linearity - relationships look pretty linear
 
-# Fit models
-m1 = lm(uptake~logconc*Type, d)
-summary(m1)
+## Fit models ----
+
+### Let's compare model fit between several different models: one that has one explanatory variable (uptake rate), one that accounts for location, and one that has an interaction between uptake rate and location.
+
+# Only looks at relationship between log concentration CO2 and CO2 uptake rate
+
+m1 = lm(uptake~logconc, d)
 display(m1)
+
+# Accounts for location
+m2 = lm(uptake~logconc + Type, d)
+display(m2)
+
+# Includes interaction between uptake rate and location
+m3 = lm(uptake~logconc*Type, d)
+display(m3)
+
+# put here your interpretation of the coefficients of the model
+
+## Assumptions of a linear regression model
+
+# Validity - our question is simply about the effects of one variable on the other; so in this case the regression model seems to be a valid test of this
+# Linearity - relationships look fairly linear on the scatterplot
+# Independence of errors
+# Equal variance of errors
+# Normality of errors
+
+# Test for normality and equal variance of errors:
+
+par(mfrow=c(2, 1), mar=rep(3,4), mgp=c(2,1,0))
+plot(m3, which=1:2)
+
+# Interpreting the coefficients of the model ----
+
+# Easier to center and scale the explanatory variables before trying to interpret them
+
+d.center <- mutate(d, logconc = scale(logconc, center=TRUE, scale=TRUE))
+
+### Then we can repeat the same regression and compare 
+
+m4 <- lm(uptake~logconc*Type, d.center)
+display(m3)
+display(m4)
+
+ggplot(d.center, aes(x=logconc, y=uptake, group = Type, color = Type)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+  ggtitle("log CO2 concentration vs CO2 uptake rate") +
+  xlab("centered log CO2 concentration") +
+  ylab("CO2 uptake rate")
+
+d.center$logconc <- d$logconc - mean(d$logconc, na.rm=T)
 
 # Question 2 ----
 
 # Load the data set “ecdata_HW1.txt”, which includes some growth and flowering time information on some Erodium cicutarium plants from serpentine and non-serpentine environments. The columns are: 
-# sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
-# earlylfno: count of leaves early in the plant’s growth
-# totallfno: count of total leaves at end of experiment
-# ffdate: date of first flowering in days after germination
+#  sourceSOILTYPE: soil type of source population, 1 = non-serpentine, 2 = serpentine
+#  earlylfno: count of leaves early in the plant’s growth
+#  totallfno: count of total leaves at end of experiment
+#  ffdate: date of first flowering in days after germination
 
 ec = read.table("ecdata_HW1.txt", header = TRUE)
 head(ec)
