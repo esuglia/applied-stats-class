@@ -77,8 +77,6 @@ display(m2)
 m3 = lm(uptake~logconc*Type, d)
 display(m3)
 
-# put here your interpretation of the coefficients of the model
-
 ## Assumptions of a linear regression model
 
 # Validity - our question is simply about the effects of one variable on the other; so in this case the regression model seems to be a valid test of this
@@ -112,7 +110,61 @@ ggplot(d.center, aes(x=logconc, y=uptake, group = Type, color = Type)) +
   xlab("centered log CO2 concentration") +
   ylab("CO2 uptake rate")
 
-d.center$logconc <- d$logconc - mean(d$logconc, na.rm=T)
+#d.center$logconc <- d$logconc - mean(d$logconc, na.rm=T)
+
+ggplot(d.center, aes(x=logconc, y=uptake, group = Type, color = Type)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+  ggtitle("log CO2 concentration vs CO2 uptake rate") +
+  xlab("centered log CO2 concentration") +
+  ylab("CO2 uptake rate")
+
+## Plot fitted vs observed
+betas <- coef(m4) # this extracts the coefficients from the linear model
+plot(uptake~logconc, data=d.scaled, pch=16)
+abline(betas[1], betas[2], col="blue") # regression line for treatment=0
+abline(betas[1]+betas[3], betas[2]+betas[4], col="red") # regression line for treatment=1
+
+# Plotting the regression line plus confidence intervals.
+
+## Couldn't figure out how to do it for a dataset with multiple explanatory variables
+
+# set the range of the explanatory variable to use for displaying the predictions
+x.pred <- seq(min(d.center$logconc)*1.1, max(d.center$logconc)*1.1, by=0.05) # generates a sequence of values going just outside the range of observed x values
+
+# The function predict() lets us predict the response variable from various levels of the explanatory variable. 
+d.pred <- predict(m4, data.frame(logconc=x.pred), se.fit=TRUE, interval="prediction") 
+# Make predictions into a table for easier plotting 
+erodium_pred_out <- data.frame(x.pred = x.pred, fit = erodium.pred$fit[,1], lwr = erodium.pred$fit[,2], upr = erodium.pred$fit[,3])
+
+# We can also get intervals around that prediction. We can get "predictive" interval, or a "confidence" interval (see below). 
+plot(fit ~ x.pred, erodium_pred_out, type="l", ylim=c(-3, 4), ylab="log(Stem Length mm)", xlab="Days to flower")
+lines(lwr~x.pred, erodium_pred_out, lty=2)
+lines(upr~x.pred, erodium_pred_out, lty=2)
+# plot the data on top of the fit
+points(log(stem_length)~days_to_flower, d.scaled)
+
+# Are there more points than you'd expect outside the 95% prediction interval? 
+
+# For comparison, here is a plot showing the confidence interval around the regression line:
+erodium.pred <- predict(m4, data.frame(days_to_flower=x.pred), se.fit=TRUE, interval="confidence")  
+erodium_pred_out <- data.frame(x.pred = x.pred, fit = erodium.pred$fit[,1], lwr = erodium.pred$fit[,2], upr = erodium.pred$fit[,3])
+plot(fit ~ x.pred, erodium_pred_out, type="l", ylim=c(-3, 4), ylab="log(Stem Length mm)", xlab="Days to flower")
+lines(lwr~x.pred, erodium_pred_out, lty=2)
+lines(upr~x.pred, erodium_pred_out, lty=2)
+# plot the data on top of the fit
+points(log(stem_length)~days_to_flower, d.scaled)
+
+# Interpreting the coefficients of the model
+
+# intercept = When the data is not centered and scaled, the intercept would represent the predicted log CO2 concentration when CO2 uptake rate equals zero, such as in model m3, where the intercept is -4.40. This is actually more interpretable to me than the intercept that comes out of the model on the centered and scaled data, in this case.
+
+# the coefficient for logconc (2.64): an increase in one unit log concentration of CO2 results in an increase in average uptake rate by 2.64 units, all other variables held constant
+
+# coefficient for TypeQuebec (15.94): being in Quebec will increase your uptake rate by 15.94 units, all else held constant
+
+# coefficient for the interaction between logconc and TypeQuebec: (5.95) this represents the difference in slope for log CO2 concentration rate vs uptake rate,  depending on location
 
 # Question 2 ----
 

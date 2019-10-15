@@ -127,6 +127,7 @@ display(m3)
 
 The model that includes the interaction between uptake rate and location has the best fit: its residual standard deviation is lowest and the R-squared value is highest (this model explains the most variation in the response variable). This makes sense based on our observation above that the relationship between log CO2 concentration and uptake rate depends on location. 
 
+
 ## Assumptions of a linear regression model
 
 - Validity - our question is simply about the effects of one variable on the other; so in this case the regression model seems to be a valid test of this
@@ -173,7 +174,23 @@ ggplot(d.center, aes(x=logconc, y=uptake, group = Type, color = Type)) +
 ```
 
 
-# put here your interpretation of the coefficients of the model
+- Intercept = When the data is not centered and scaled, the intercept would represent the predicted log CO2 concentration when CO2 uptake rate equals zero, such as in model m3, where the intercept is -4.40. This is actually more interpretable to me than the intercept that comes out of the model on the centered and scaled data, in this case.
+- The coefficient for logconc (2.64): an increase in one unit log concentration of CO2 results in an increase in average uptake rate by 2.64 units, all other variables held constant
+- Coefficient for TypeQuebec (15.94): being in Quebec will increase your uptake rate by 15.94 units, all else held constant
+-Coefficient for the interaction between logconc and TypeQuebec: (5.95) this represents the difference in slope for log CO2 concentration rate vs uptake rate,  depending on location
+
+
+## Testing fit: compare graphs of observed vs modeled data
+
+```{r, message = FALSE}
+betas <- coef(m4) # this extracts the coefficients from the linear model
+plot(uptake~logconc, data=d.center, pch=16)
+abline(betas[1], betas[2], col="blue")
+abline(betas[1]+betas[3], betas[2]+betas[4], col="red")
+```
+
+The model appears to fit the observed data pretty well. It would also be useful to construct a confidence interval but I couldn't figure out how to make the code work when you have an interaction term.
+
 
 # **Question 2**
 
@@ -211,7 +228,7 @@ gammaNLL1 <- function(shape, scale) {
 
 ### Look up the gamma distribution and see what its moments are to get starting values:
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
 shape.start <- mean(ec$ffdate)^2 / var(ec$ffdate)
 scale.start <- var(ec$ffdate) / mean(ec$ffdate)
 
@@ -249,3 +266,12 @@ logLik(m3ec) # -2440.377
 
 Log-likelihood goes down to -2440.377.
 
+### Shift the mean parameter to 20:
+
+```{r, message = FALSE}
+m4ec = mle2(ffdate~dnorm(mean=20, sd=sigma.ff), data=ec, start=list(mu=10, sigma=1))
+logLik(m4ec) # -3623.325
+```
+
+
+Log-likelihood goes down to -3623.325.
