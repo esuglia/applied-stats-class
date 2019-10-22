@@ -28,30 +28,32 @@ binomNLL1 <- function(p, k, N) {
   return(-sum(dbinom(prob=p, k, size=N, log=T)))
 }
 # Q why do you think we want to work on the log scale right away? 
+# because we know we are interested in the log likelihood, and this is mathematically simpler
 # Alternatively, we could calculate the individual likelihood values and multiply, then log-transform the result.
 
 # We can quickly test to make sure this function is working by supplying a few values for p
 binomNLL1(0.5, tadpole$Kill, tadpole$Exposed) # this p is obviously an overestimate since max kills is 5
 binomNLL1(0.1, tadpole$Kill, tadpole$Exposed) # this might be closer to correct
 # Comparing these two results, does the number change in the direction you expect? What does this indicate?
+  # prob of being killed is closer to 0.5 than to 0.1
 
 # The basic R function for optimizing the parameters of a function is optim()
 # We can use it to fit the binomial likelihood to data
 opt.out <- optimize(f=binomNLL1, interval=c(0,1), N=tadpole$Exposed, k=tadpole$Kill)
 # Compare to what we know is the actual ML estimate: 
-sum(tadpole$Kill)/sum(tadpole$Exposed)
-opt.out
+sum(tadpole$Kill)/sum(tadpole$Exposed) # 0.106
+opt.out # 26.847, MLE = 0.106
 
 # We could alternatively use Ben Bolker's user-friendlier ML function mle2()
 # For the binomial likelihood, it already knows the likelihood function:
 mle.out <- mle2(Kill~dbinom(prob=p, size=10), data=tadpole, start=list(p=0.5))
-mle.out
+mle.out # 26.85 NLL, coeff p = 0.106
 
 # The reason to work with log-likelihoods becomes clear if we look at the actual value of the likelihood here:
 logLik(mle.out)
 exp(-26.85)
 # How would we interpret this probability? Does it matter that it's low? Relative to what? 
-
+# it's very small. 
 
 #### PART 2: Working in groups  ####
 #           Implementing Bolker's myxomitosis example of a gamma likelihood
@@ -80,8 +82,9 @@ m2 <- mle2(titer~dnorm(mean=mu, sd=sigma), data=myxdat, start=list(mu=10, sigma=
 #m2 = fitdistr(myxdat$titer, densfun="normal") 
 
 AIC(m1, m2) # Which distribution is better according to this criterion?
+              # normal is better (by 3 AIC points; usually a diff of 2 is considered enough)
             # Does the penalty for number of parameters matter here? 
-
+              # no, same penalty
 
 # We might be interested in the shape of the log-likelihood around the MLEs. 
 # For a one-dimensional likelihood that's simple. 
@@ -123,8 +126,8 @@ data(ReedfrogFuncresp)
 binomNLL2 <- function(params, p, N, k) {
   a <- params[1]
   h <- params[2]
-  predprob <-   # fill in the functional response here (answer: see Bolker p.183)
-  return(-sum( ??? )) # fill in the likelihood function here (ditto)
+  predprob <- a/ (1 + a * h * N)  # fill in the functional response here (answer: see Bolker p.183)
+  return(-sum(dbinom(prob=predprob, size=N, k, log = T))) # fill in the likelihood function here (ditto)
 }
 
 # Then fit the function
@@ -150,6 +153,7 @@ lines(x.pred, predprob.lcl, lty=2)
 lines(x.pred, predprob.ucl, lty=2)
 
 # To see how good this model is, what could we compare it to? 
+
 # What are a couple ways you could compare it? 
 
 # for some discussion of the Holling type II function and alternatives, here's one discussion:

@@ -3,7 +3,7 @@
 # Andrew Latimer
 
 # if necessary install new libraries
-install.packages("mnormt")
+#install.packages("mnormt")
 library(MASS)
 library(mnormt)
 
@@ -54,10 +54,12 @@ pnorm(80, mean=mean.skink, sd=sd.skink) - pnorm(60, mean=mean.skink, sd=sd.skink
 #    To help answer this, here's a quick picture of this probabilty distribution: 
 curve(dnorm(x, mean=81.7, sd = 13.9), from=40, to=120)
 # From this picture, is it more probable that a random skink that you catch will be 80mm or 100mm long? 
+
 # To get a numerical anwser, you can use the function dnorm(), where the mean and sd are the parameters of the fitted distribution. 
 # dnorm() is the probability density function (PDF) -- it tells you what is the probability density is for any given value of x, and given some values for the mean and standard deviation.
 #dnorm(??, mean = ??, sd = ??)
-
+dnorm(80, mean = 81.7, sd = 13.9)
+dnorm(100, mean = 81.7, sd = 13.9)
 
 # CHALLENGE/EXTENSION for Part 1: Binomial data
 
@@ -71,11 +73,14 @@ curve(dnorm(x, mean=81.7, sd = 13.9), from=40, to=120)
 # dbinom(n.successes, size=1, p=0.6)
 # Assuming independent observations, what is the probability of observing 3 females and 0 males? 
 
+# useful explanation: https://www.stat.umn.edu/geyer/old/5101/rlook.html
+#density function is useful for discrete distributions, like the binomial or bernoulli
+
+dbinom(3, size=3, p=0.6) # 0.216
 
 # How likely is it to get that same outcome if the sex ratio is 1/1 (50% female)?
 
-
-
+dbinom(3, size=3, p=0.5) # 0.125
 
 #### PART 2: Comparing some common probability distributions ####
 
@@ -125,7 +130,10 @@ plot(0:10, dpois(0:10, lambda=3), col="blue", pch=16)
 points(0:10, dnbinom(0:10, mu=3, size=2), col="red", pch=16)
 
 # Q: What is the probability of observing 4 events under those two distributions? The probability of observing 8? 
-
+dpois(4, lambda = 3)
+dpois(8, lambda = 3)
+dnbinom(4, mu=3, size=2)
+dnbinom(8, mu=3, size=2)
 
 #### Multivariate normal distribution ####
 

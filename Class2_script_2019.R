@@ -208,3 +208,18 @@ ggplot(d.scaled, aes(x=days_to_flower, y=log(stem_length))) + geom_point() + sta
 
 # Comment: the function simulate() is what you'd probably ACTUALLY use to do this, but for now, try doing it "by hand" using sim() and rnorm()
 
+m4.sim = sim(m4)
+coef.m4.sim = coef(m4.sim)
+sigma.m4.sim = sigma.hat(m4.sim)
+quantile(sigma.hat(m4.sim))
+
+plot(d$days_to_flower, log(d$stem_length))
+points(rnorm(100, mean = coef.m4.sim, sd = sigma.m4.sim), col = "red")
+
+hist(d$days_to_flower)
+
+x = rnorm(100, mean = coef.m4.sim, sd = sigma.m4.sim)
+hist(x, probability=TRUE)
+xx <- seq(min(x), max(x), length=100)
+lines(xx,dnorm(xx, mean=coef.m4.sim, sd=sigma.m4.sim))
+
