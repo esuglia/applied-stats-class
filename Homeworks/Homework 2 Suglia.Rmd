@@ -219,12 +219,12 @@ Just by looking at the graphs, judge 7 appears to give consistently higher score
 boxplot(score~pair, d2, xlab = "pair")
 ```
 
-Out of curiosity, looked at variation among pairs; not much variation of scores within pairs
+Out of curiosity, looked at variation among pairs; not much variation of scores within pairs but plenty of variation among pairs
 
 ## Fit model
 
 ```{r, message = FALSE}
-mskate <- lmer(score~pair + judge + (1|judge) + (1|pair), data = d2)
+mskate <- lmer(score~ (1|judge) + (1|pair), data = d2)
 ```
 
 ## Interpet results
@@ -233,14 +233,8 @@ mskate <- lmer(score~pair + judge + (1|judge) + (1|pair), data = d2)
 display(mskate)
 ```
 
-- Standard error of coefficients for pair and judge are similar but slightly higher for judge
+- Standard deviation of random effect for pair is higher than that for judge
 
-- Pairs are ranked in descending order of average score; so it makes sense that there is a negative correlation between pair and score
-
-- The number assigned to judge doesn't really mean anything so the coefficient for slope between judge and score is not easily interpretable
-
-- The standard deviation in the error term for the random effect judge is again higher than that for pair
-
-- I would conclude that judges explain more of the variation in scores than pairs do
+- I would conclude that pair explains more of the variation in scores than judge does
 
 
