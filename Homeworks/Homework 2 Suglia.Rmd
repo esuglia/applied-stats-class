@@ -1,0 +1,246 @@
+---
+title: "Homework 2 Suglia"
+author: "Elena Suglia"
+date: "11/5/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Question 1**
+
+*Using the Char Height data set from class (char_with_fake.csv), construct a model with random effects for these data, using CharHt as the response variable. Assume that Transect is the only relevant grouping factor, and that Steepness (of the topography) and Diameter (of the trees) are the only available predictors. In reporting about the model please include:*
+
+*- A brief explanation of how you chose variables, and which (if any) you decided to allow to vary by group (Transect).*
+
+*- An assessment of how much variation there is in the group-level random effects.*
+
+*- A brief assessment of how well your selected model fits the data.*
+
+**Notes about this data set:**
+*This data set adds a fake, randomly generated predictor that is just noise (rnorm). Why are we doing this? Recall that the penalty term in AIC is designed to offset the improvement in fit you would typically get if you added a randomly generated explanatory variable to your model -- one that has no "true" relationship to the response variable.*
+
+
+
+```{r, include = FALSE}
+library(arm)
+library(lme4)
+library(lattice)
+library(tidyverse)
+library(dplyr)
+library(vioplot)
+library(lme4)
+library(arm)
+library(bbmle) # Ben Bolker's library of mle functions
+library(MASS)
+```
+
+
+
+```{r, include = FALSE}
+d = read.csv("char_with_fake.csv", header = TRUE)
+head(d) # loaded correctly
+str(d) # data structure looks good
+```
+
+## Look at variation in data across groups
+
+```{r, message = FALSE}
+boxplot(CharHt~Transect, d, xlab = "Transect")
+```
+
+Lots of variation among groups.
+
+## What about relationships between predictor and response variables?
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(d, aes(x=Diameter, y=CharHt)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+  ggtitle("Diameter vs CharHt") +
+  xlab("Diameter") +
+  ylab("CharHt") +
+  facet_wrap(~Transect)
+
+ggplot(d, aes(x=Slope, y=CharHt)) +
+  geom_point() +
+  geom_smooth(span=2) +
+  theme_classic() +
+  ggtitle("Slope vs CharHt") +
+  xlab("Slope") +
+  ylab("CharHt") +
+  facet_wrap(~Transect)
+```
+
+There appears to be some variation in response to both explanatory variables.
+
+Check normality using a Q-Q plot
+
+```{r, message = FALSE, warning = FALSE}
+qqnorm(d$CharHt, main = "Normal Q-Q plot", xlab = "Theoretical quantiles", ylab = "Sample quantiles")
+```
+
+- Not perfectly normal but not too bad either
+
+## Check for collinearity (correlation between explanatory variables)
+
+```{r, message = FALSE}
+x = select(d, Slope, Diameter)
+round(cor(x), 2)
+```
+
+They're only correlated a little (0.2); I think this is acceptable
+
+## Fit model
+
+### First, decide which predictor(s) to include; slope and/or diameter (fixed effects models):
+
+```{r, message+ FALSE}
+# Let's fit some models and compare them
+
+# Fixed effects only
+m1 = lm(CharHt~Slope, data =d)
+m2 = lm(CharHt~Diameter, data = d)
+m3 = lm(CharHt~Slope+Diameter, data = d)
+m4 = lm(CharHt~Slope*Diameter, data = d)
+
+# Mixed models including both fixed and random effects
+m5 <- lmer(CharHt~Slope+(1|Transect), data=d, REML = FALSE)
+m6 <- lmer(CharHt~Diameter+(1|Transect), data=d, REML = FALSE)
+m7 <- lmer(CharHt~Diameter+(1+Slope|Transect), data=d, REML = FALSE)
+m8 <- lmer(CharHt~Slope+(1+Diameter|Transect), data=d, REML = FALSE)
+m9 <- lmer(CharHt~Diameter+Slope+(1|Transect), data=d, REML=FALSE)
+m10 <- lmer(CharHt~Diameter*Slope+(1|Transect), data=d, REML = FALSE)
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+```
+
+Including the random effects improves model fit. The model with varying slopes + intercepts for the explanatory variable Diameter fits the best.
+
+## How much variation is there in the group-level random effects?
+
+```{r, message = FALSE}
+display(m8)
+```
+
+- Standard deviation in the varying Intercept for transect is 0.88
+
+- S.d of varying slope for Diameter is 0.29
+
+- The residual error is 0.72
+
+## Do we include the random effects or not?
+
+Use MuMIn package to compare modified R2 values for models with fixed effects only vs models with both fixed and random effects.
+
+```{r, message = FALSE, warning = FALSE}
+# Useful notes from the help page for the package:
+# The marginal R2 value represents the variance explained by the fixed effects
+# The conditional R2 value is interpreted as the variance explained by 
+# the entire model, including both fixed and random effects
+
+library(MuMIn)
+r.squaredGLMM(m5) 
+r.squaredGLMM(m6) 
+r.squaredGLMM(m7) 
+r.squaredGLMM(m8) 
+r.squaredGLMM(m9) 
+r.squaredGLMM(m10) 
+```
+
+Including the random effects does allow the model to explain more of the variation in the response variable.
+
+## Testing model assumptions
+
+```{r, message = FALSE, warning = FALSE}
+par(mfrow=c(2, 1), mar=rep(3,4), mgp=c(2,1,0))
+plot(m4, which=1:2)
+```
+
+These assumptions appear to be adequately met
+
+## Testing model fit
+
+One way to assess model performance is with cross-validation.
+
+There are 6 fires in total: let's withhold 3 and allow the model to predict the last 3:
+
+```{r, message = FALSE}
+d.fit <- filter(d, Fire %in% (1:3)) # training data
+d.holdout <- filter(d, Fire %in% (4:6)) # prediction data
+```
+
+Use data on 1st fire to predict 2nd fire
+
+{r, message = FALSE}
+d.fit <- filter(d, Fire ==1) # training data
+d.holdout <- filter(d, Fire ==2) # prediction data
+
+
+### Fit the models
+```{r, message = FALSE}
+char.m1 <- lmer(CharHt~Slope+(1+Diameter|Transect), data=d.fit, REML = FALSE)
+char.m2 <- lmer(CharHt~Slope*fake+(1+Diameter|Transect), data=d.fit, REML = FALSE)
+```
+
+### Compare raw sum of squared error and penalized fit terms
+
+```{r, message = FALSE}
+# mean squared error of the model fit
+mean(resid(char.m1)^2)
+mean(resid(char.m2)^2)
+
+mean((predict(char.m1, newdata=d.holdout, allow.new.levels = TRUE) - d.holdout$CharHt)^2)
+mean((predict(char.m2, newdata=d.holdout, allow.new.levels = TRUE) - d.holdout$CharHt)^2)
+# Which model does better in this cross-validation test? 
+```
+
+
+
+# Question 2
+
+*Get data on performance scores for pairs figure skating in the 1932 olympics (from http://www.stat.columbia.edu/~gelman/arm/examples/olympics/olympics1932.txt). This is formatted for R as “olympics.csv” on Smartsite in the homework folder.*
+
+*Let’s assume the question is: which is the bigger source of variation in the scores for skating programs, the judges or the skating pair? Fit a mixed model for these data with “score” as the response variable, and random effects for judge and skating pair (“judge” and “pair”). Interpret the results (coefficients and their standard errors, standard errors of the random effects). Is there a judge that tends to give consistently higher scores? *
+
+
+```{r, message = FALSE}
+d2 = read.csv("olympics.csv", header = TRUE)
+boxplot(score~judge, d2, xlab = "Judge")
+```
+
+Just by looking at the graphs, judge 7 appears to give consistently higher scores than the others, and perhaps judge 2 as well
+
+
+```{r, message = FALSE}
+boxplot(score~pair, d2, xlab = "pair")
+```
+
+Out of curiosity, looked at variation among pairs; not much variation of scores within pairs
+
+## Fit model
+
+```{r, message = FALSE}
+mskate <- lmer(score~pair + judge + (1|judge) + (1|pair), data = d2)
+```
+
+## Interpet results
+
+```{r, message = FALSE}
+display(mskate)
+```
+
+- Standard error of coefficients for pair and judge are similar but slightly higher for judge
+
+- Pairs are ranked in descending order of average score; so it makes sense that there is a negative correlation between pair and score
+
+- The number assigned to judge doesn't really mean anything so the coefficient for slope between judge and score is not easily interpretable
+
+- The standard deviation in the error term for the random effect judge is again higher than that for pair
+
+- I would conclude that judges explain more of the variation in scores than pairs do
+
+

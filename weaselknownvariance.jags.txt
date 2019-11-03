@@ -1,0 +1,12 @@
+model{ 
+  # Likelihood
+  for (i in 1:n.weasels) {
+    y[i] ~ dnorm(mu, tau)
+  }
+  
+  # Priors
+  mu ~ dnorm(42.25, 0.04)  
+    # Note the precision tau is known in this model, so there's no prior for it. 
+    # Instead, we can just give it a fixed value (1/variance = 1/16):
+  tau <- 1/16
+}

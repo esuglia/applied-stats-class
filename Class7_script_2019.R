@@ -183,4 +183,3 @@ plot(predict(fish_mfull, newdata=fish.holdout)~fish.holdout$log_rarefied_abundan
 abline(0,1)
 plot(predict(fish.avg, newdata=x2.avg)$mean~fish.holdout$log_rarefied_abundance, main= "Model Avg Prediction", ylim=c(-0.1, 2))
 abline(0,1)
-

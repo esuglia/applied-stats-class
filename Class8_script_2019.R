@@ -39,9 +39,16 @@ display(m2)
 
 # a) Does including county-level bedrock uranium content reduce the county-level error term? Does it reduce the residual error term? Why or why not? 
 
+display(m1)
+display(m2)
+
+# it reduces the county-level error term
+# it does not reduce the residual error term
+# I think this might be because we are adding a new source of variation, and now the model has to deal with it accordingly
+
 # b) Does including county-level uranium levels improve the model? 
 
-
+# yes, AIC and DIC scores are both lower for m2
 
 #### Part 2: Predicting from a multilevel model ####
 
@@ -53,7 +60,7 @@ display(m2)
 
 # 1) If the houses are in counties already included in our data set for fitting the model, then we have random effect values for those counties. To predict house-level radon levels, we would use all the information from our model, including both fixed and random effects. We'd expect the predictions to be relatively good.
 
-# To set up this comparison, let's first break the radon data set into two parts by county, so we can make predictions to counties that are "new", that is, not containes in the fitting data set. 
+# To set up this comparison, let's first break the radon data set into two parts by county, so we can make predictions to counties that are "new", that is, not contained in the fitting data set. 
 
 radon1 <- filter(radon, county %in% counties[1:50])
 radon2 <- filter(radon, county %in% counties[51:n.counties])
