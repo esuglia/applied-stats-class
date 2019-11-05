@@ -110,12 +110,13 @@ m4 = lm(CharHt~Slope*Diameter, data = d)
 # Mixed models including both fixed and random effects
 m5 <- lmer(CharHt~Slope+(1|Transect), data=d, REML = FALSE)
 m6 <- lmer(CharHt~Diameter+(1|Transect), data=d, REML = FALSE)
-m7 <- lmer(CharHt~Diameter+(1+Slope|Transect), data=d, REML = FALSE)
-m8 <- lmer(CharHt~Slope+(1+Diameter|Transect), data=d, REML = FALSE)
-m9 <- lmer(CharHt~Diameter+Slope+(1|Transect), data=d, REML=FALSE)
+m7 <- lmer(CharHt~Diameter+(1+Slope|Transect), data=d, REML = FALSE) # failed to converge
+m8 <- lmer(CharHt~Slope+(1+Diameter|Transect), data=d, REML = FALSE) # best fit
+m9 <- lmer(CharHt~Diameter+Slope+(1|Transect), data=d, REML=FALSE) # close second best fit
 m10 <- lmer(CharHt~Diameter*Slope+(1|Transect), data=d, REML = FALSE)
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+BIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
 ```
 
 Including the random effects improves model fit. The model with varying slopes + intercepts for the explanatory variable Diameter fits the best.
@@ -136,6 +137,7 @@ display(m8)
 
 Use MuMIn package to compare modified R2 values for models with fixed effects only vs models with both fixed and random effects.
 
+
 ```{r, message = FALSE, warning = FALSE}
 # Useful notes from the help page for the package:
 # The marginal R2 value represents the variance explained by the fixed effects
@@ -151,7 +153,7 @@ r.squaredGLMM(m9)
 r.squaredGLMM(m10) 
 ```
 
-Including the random effects does allow the model to explain more of the variation in the response variable.
+Including the random effects does allow the model to explain more of the variation in the response variable. The R2 values are also pretty good, explaining 50-60% of the variation.
 
 ## Testing model assumptions
 
@@ -162,9 +164,9 @@ plot(m4, which=1:2)
 
 These assumptions appear to be adequately met
 
-## Testing model fit
+## Cross-validation
 
-One way to assess model performance is with cross-validation.
+Another way to assess model performance is with cross-validation.
 
 There are 6 fires in total: let's withhold 3 and allow the model to predict the last 3:
 
@@ -172,13 +174,6 @@ There are 6 fires in total: let's withhold 3 and allow the model to predict the 
 d.fit <- filter(d, Fire %in% (1:3)) # training data
 d.holdout <- filter(d, Fire %in% (4:6)) # prediction data
 ```
-
-Use data on 1st fire to predict 2nd fire
-
-{r, message = FALSE}
-d.fit <- filter(d, Fire ==1) # training data
-d.holdout <- filter(d, Fire ==2) # prediction data
-
 
 ### Fit the models
 ```{r, message = FALSE}
@@ -198,7 +193,7 @@ mean((predict(char.m2, newdata=d.holdout, allow.new.levels = TRUE) - d.holdout$C
 # Which model does better in this cross-validation test? 
 ```
 
-
+They both appear to be performing equally well; maybe this is because the fake randomly varying data is swamped by the rest of the data? Not sure how to interpret this particular result, but I think the model is performing adequately well.
 
 # Question 2
 
@@ -231,10 +226,10 @@ mskate <- lmer(score~ (1|judge) + (1|pair), data = d2)
 
 ```{r, message = FALSE}
 display(mskate)
+summary(mskate)
 ```
 
 - Standard deviation of random effect for pair is higher than that for judge
 
 - I would conclude that pair explains more of the variation in scores than judge does
-
 

@@ -76,6 +76,7 @@ m9 <- lmer(CharHt~Diameter+Slope+(1|Transect), data=d, REML=FALSE)
 m10 <- lmer(CharHt~Diameter*Slope+(1|Transect), data=d, REML = FALSE)
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+BIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
 # those that include the interaction are all worse than those without the interaction
 
 # Stepwise check through all combinations of variables
@@ -196,8 +197,8 @@ grid.arrange(p.full, p.fixed, nrow=1, ncol=2)
 ## Question 2
 # Get data on performance scores for pairs figure skating in the 1932 olympics (from http://www.stat.columbia.edu/~gelman/arm/examples/olympics/olympics1932.txt). This is formatted for R as “olympics.csv” on Smartsite in the homework folder.
 
-# Let’s assume the question is: which is the bigger source of variation in the scores for skating programs, the judges or the skating pair? Fit a mixed model for these data with “score” as the response variable, and random effects for judge and skating pair (“judge” and “pair”). Interpret the results (coefficients and their standard errors, standard errors of the random effects). Is there a judge that tends to give consistently higher scores?  
-  
+# Let’s assume the question is: which is the bigger source of variation in the scores for skating programs, the judges or the skating pair? Fit a mixed model for these data with “score” as the response variable, and random effects for judge and skating pair (“judge” and “pair”). Interpret the results (coefficients and their standard errors, standard errors of the random effects). Is there a judge that tends to give consistently higher scores?
+
 d2 = read.csv("olympics.csv", header = TRUE)
 ggplot(data=d2, aes(x=judge, y=score, group = pair, color=pair)) +
   geom_point()
@@ -206,9 +207,11 @@ boxplot(score~judge, d2, xlab = "Judge")
 boxplot(score~pair, d2, xlab = "pair")
 # out of curiosity, looked at variation among pairs; not much variation of scores within pairs
 # Fit model
-m8 <- lmer(score~pair + judge + (1|judge) + (1|pair), data = d2)
+m16 <- lmer(score~ (1|judge), data = d2)
+mskate <- lmer(score~  (1|judge) + (1|pair), data = d2)
 # Interpet results
-display(m8)
+summary(mskate)
+
 #             coef.est coef.se
 # (Intercept)  6.03     0.31  
 # pair        -0.20     0.04  

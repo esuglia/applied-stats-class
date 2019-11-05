@@ -3,17 +3,38 @@
 # PLS 298 -- F2019
 # Andrew Latimer
 
-install.packages("rjags")
-install.packages("rstan")
-install.packages("MCMCglmm")
-install.packages("brms")
+#install.packages("rjags")
+#install.packages("rstan")
+#install.packages("MCMCglmm")
+#install.packages("brms")
+#install.packages("tidyverse")
+#install.packages("htmlwidgets")
+#install.packages("shiny")
+#install.packages("crosstalk")
+#install.packages("miniUI")
 
+library(brms)
+library(tidyverse)
 library(rjags)
 library(MCMCpack)
 library(lattice)
 library(dplyr)
 library(MCMCglmm)
-library(brms)
+library(rstan)
+
+# Had a bunch of issues getting rstan and brms to work; tried the following but ended up having to uninstall and reinstall R version 3.6.0
+
+#remove.packages("rstan")
+#if (file.exists(".RData")) file.remove(".RData")
+#Sys.setenv(MAKEFLAGS = "-j4") # four cores used
+#install.packages("rstan", type = "source")
+#.libPaths()
+#pkgbuild::has_build_tools(debug = TRUE)
+#pkgbuild::find_rtools(debug = TRUE)
+
+#myPaths <- .libPaths()   # get the paths
+#myPaths <- c(myPaths[2], myPaths[1])  # switch them
+#.libPaths(myPaths)  # reassign them
 
 ####################################################
 #### Part 1: Refitting the model from last week in JAGS ####
