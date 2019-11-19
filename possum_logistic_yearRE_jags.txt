@@ -1,0 +1,18 @@
+model {
+
+for (i in 1:N.pops) { # loop over the 4 populations (rows of the data)
+  for (j in 2:N.years) { # loop over years 2-11 (columns of the data)
+
+    N[i,j] ~ dpois(N.hat[i,j]) # Poisson likelihood for population counts
+    N.hat[i,j] <- N[i,j-1] * exp(r*(1-N[i,j-1]/K)) + RE.year[j-1]
+              # expected value of Poisson for next year, based on current pop size and logistic growth 
+  }
+}
+
+# Priors
+r ~ dunif(0, 1.0986) # Follow McCarthy and strongly constrain max growth rate
+K ~ dunif(1, 50) # Also follow McCarthy and don't strongly constrain K
+for (j in 1:N.years) { RE.year[j] ~ dnorm(0, tau.year) } # year random effects
+tau.year ~ dgamma(0.01, 0.01) # vague prior on precision parameter for year RE
+sigma.year <- pow(tau.year, -1/2) # calculate year sd for interpretation 
+}

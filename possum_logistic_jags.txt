@@ -1,0 +1,16 @@
+model {
+
+for (i in 1:N.pops) { # loop over the 4 populations (rows of the data)
+  for (j in 2:N.years) { # loop over years 2-11 (columns of the data)
+
+    N[i,j] ~ dpois(N.hat[i,j]) # Poisson likelihood for population counts
+    N.hat[i,j] <- N[i,j-1] * exp(r*(1-N[i,j-1]/K))
+              # expected value of Poisson for next year, based on current pop size and assuming logistic growth
+  }
+}
+
+# Priors
+r ~ dunif(0, 1.0986) # Follow McCarthy and strongly constrain max growth rate based on biological knowledge about possum reproduction
+K ~ dunif(1, 50) # Also follow McCarthy and don't strongly constrain K
+
+}

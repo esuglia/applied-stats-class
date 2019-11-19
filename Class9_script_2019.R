@@ -35,7 +35,7 @@ prior.mean <- mean(w03m$Body_mass)
 
 
 prior.sd <- sd(w03m$Body_mass) # ?? [insert here the standard error of the mean for the w03m data]
-# prior.sd = 5 (part b asks you to change the variance of the prior)
+# prior.sd = 5 #(part b asks you to change the variance of the prior)
 # For doing the weighted means of prior and likelihood, we use the variance instead of the standard deviation:
 prior.var <- prior.sd^2
 
@@ -63,7 +63,7 @@ qplot(y, geom="blank") + theme_bw() + scale_x_continuous("Body mass", limits=c(7
 #### Questions for Part 1: ####
 
 # a) How has including the prior information affected the posterior distribution? (i.e. how is the posterior different from the distribution based on data alone?)
-# they are essentially identical
+# they are essentially identical, which means that the prior is uninformative. This makes sense because the uncertainty is high - it's barely giving you any information. The certainty/informativeness of the prior is weighted by the variance (and precision, 1/var, and sd, var^2) and the sample size (n).
 
 # b) What would this plot look like if the previous data collection had had a much lower variance with the same sample size? 
 # the prior sd is really high in part a, so the prior is scaled really far back. When you reduce the variance, the prior becaomes less uniform (uncertain) and more informative, with greater weight put at the mean value.
@@ -98,8 +98,11 @@ qplot(c(0,1), geom="blank") + theme_bw() + scale_x_continuous("p", limits=c(0,1)
 
 # The beta is also nice to use as a prior for a binomial likelihood because its parameters, a and b, have direct interpretations in terms of successes and failures of a Bernoulli trial. a is equivent to number of successes plus 1, and b to number of failures plus 1. So if we actually have data on trials and outcomes from some other source, we can just include those numbers directly in the prior. If not, we can control the strength of the prior in terms of how many data points we want it to represent. If we think our prior information should be given the same weight as our new data, we could choose values for a and b that imply the same sample size as the data set (n=24):
 
-a.prior <- # ??
-b.prior <- # ??
+a.prior <- 13 # if p = 0.5 and n = 24, p/2 is 12, then 13 = # successes + 1
+b.prior <- 13 # 12 failures + 1 = 13
+
+a.prior <- 4 # if p = 0.5 
+b.prior <- 4 # 3 failures + 1 = 4
 
 # The posterior distribution is straightforward to calculate in this case:
 
@@ -122,5 +125,18 @@ qplot(c(0,1), geom="blank") + theme_bw() + scale_x_continuous("p", limits=c(0,1)
 
 # What if we thought the prior information should count only quarter as much as the data? Then we'd have only 6 observations, half of which should be successes. 
 
-# What does the posterior look like now? 
+a.prior <- 4 # if p = 0.5, 3/6 are successes + 1 = 4
+b.prior <- 4 # 3 failures + 1 = 4
 
+a.posterior <- a.prior + y # prior successes plus observed successes
+
+b.posterior <- b.prior + n - y # prior failures plus observed failures
+
+qplot(c(0,1), geom="blank") + theme_bw() + scale_x_continuous("p", limits=c(0,1)) + scale_y_continuous("Density") +
+  scale_color_discrete(name="Distribution", h=c(90, 270)) + 
+  stat_function(fun=dbeta, args=list(shape1=a.prior, shape2=b.prior), aes(color="prior")) + 
+  stat_function(fun=dbeta, args=list(shape1=y, shape2=n-y), aes(color="data only")) +
+  stat_function(fun=dbeta, args=list(shape1=a.posterior, shape2=b.posterior), aes(color="posterior"))
+
+# What does the posterior look like now? 
+# here, we have less data (n is lower; 6 rather than 24); therefore, the prior is less informative than in the previous example.

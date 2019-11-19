@@ -1,0 +1,16 @@
+# model for Clark's treeFACE data, regression example for class 11
+
+model {
+  # Likelihood
+  for (i in 1:n.trees) {
+    growth[i] ~ dnorm(mu[i], tau)
+    mu[i] <- beta[1] + beta[2]*treatment[i] 
+  }
+
+  # Priors
+  for (j in 1:2) {
+    beta[j] ~ dnorm(0, 0.01) # independent normal priors on intercept and slope
+  }
+  sigma2 ~ dunif(0.001, 1000) # uniform uninformative prior on the variance
+  tau <- pow(sigma2, -2) # calculate precision since dnorm() in jags needs this
+}

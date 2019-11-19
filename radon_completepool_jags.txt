@@ -1,0 +1,17 @@
+# complete-pooling regression model for radon data for class 12
+
+# compare to: lm(y~x, data=radon)
+
+model {
+  # Likelihood
+  for (i in 1:n) {
+    y[i] ~ dnorm(y.hat[i], tau.y)
+    y.hat[i] <- a + b*x[i] 
+  }
+
+  # Priors
+  a ~ dnorm(0, 0.1) # weak normal priors on intercept
+  b ~ dnorm(0, 0.1) #  and slope
+  sigma.y ~ dnorm(0, 0.1)T(0,) # uniform weakly informative prior on the standard deviation
+  tau.y <- pow(sigma.y, -2) # calculate precision since dnorm() in jags needs this
+}

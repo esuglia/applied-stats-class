@@ -1,0 +1,33 @@
+# Zero-inflated Poisson model (ZIP) 
+# Adapted from Ntzoufras (2009) "Bayesian Modeling Using WinBUGS: An Introduction"
+# Chapter 8
+# http://stat-athens.aueb.gr/~jbn/winbugs_book/
+
+model {
+	# Likelihood
+	for(i in 1:n) { 
+
+		y[i] ~ dpois(mu[i])
+    		mu[i] <- (1-u[i])*lambda.ind[i] + 0.0001
+          			# when u[i] = 1, observation i is an "excess" zero
+			  	# when u[i] = 0, observation i is from Poisson 
+         		 	# adding 0.0001 is a hack required for JAGS, per Bolker
+
+		log(lambda.ind[i]) <- beta[1] + beta[2]*gender[i] # regression for count model 
+
+		u[i]~dbern(p0[i]) # model for excess zeros
+		logit(p0[i]) <- gamma[1] + gamma[2]*gender[i] # regression for zero-inflation model
+	}	
+
+	# Priors 
+	for (j in 1:2) {
+		beta[j] ~ dnorm(0, 0.01) # weak priors on regression coefs
+		gamma[j] ~ dnorm(0, 0.01)
+	}
+
+	# Things to monitor for inference and model checks
+	lambda[1] <- exp(beta[1]) # monitor mean of Poisson for females (gender=0) 
+	lambda[2] <- exp(beta[1]+beta[2]) # ditto for males (gender=1)
+	lambda.diff <- lambda[2] - lambda[1] # difference between means for genders
+	for (i in 1:n) { resid[i] <- y[i] - mu[i] } # calculate residuals
+}

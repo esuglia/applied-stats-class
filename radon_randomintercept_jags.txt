@@ -1,0 +1,27 @@
+# random intercept model for radon data for class 12
+
+# compare to: lmer(y~x+(1|county), data=radon)
+
+model {
+  # Likelihood
+  for (i in 1:n) {
+    y[i] ~ dnorm(y.hat[i], tau.y)
+    y.hat[i] <- a[county.index[i]] + b*x[i] # regression with intercept for each county
+  }
+
+
+  # group-level model
+  for (j in 1:n.counties) {
+    a[j] ~ dnorm(mu.a, tau.a) # separate intercepts for every county, no pooling of information
+  }
+
+	#priors
+  mu.a ~ dnorm(0, 0.1) # overall mean
+  sigma.a ~ dnorm(0, 0.5)T(0,) # weakly informative prior on the group-level standard deviation
+  tau.a <- pow(sigma.a, -2) # group-level precision
+
+  # individual-level priors
+  b ~ dnorm(0, 0.1) #  prior for slope
+  sigma.y ~ dnorm(0, 0.1)T(0,) # weakly informative prior on the individual-level sd
+  tau.y <- pow(sigma.y, -2) # individual-level precision
+}

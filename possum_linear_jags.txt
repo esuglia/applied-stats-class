@@ -1,0 +1,19 @@
+model {
+
+for (i in 1:N.pops) { # loop over the 4 populations (rows of the data)
+  for (j in 2:N.years) { # loop over years 2-11 (columns of the data)
+
+    N[i,j] ~ dpois(N.hat[i,j]) # Poisson likelihood for population counts
+    log(N.hat[i,j]) <- a + b1*N[i,j-1] + b2*pow(N[i,j-1], 2)
+              # expected value of Poisson related to quadratic fn of previous pop count
+              # here, using the conventional log link for Poisson glm
+  }
+}
+
+# Priors
+a ~ dnorm(0, 0.1)
+b1 ~ dnorm(0, 0.1)
+b2 ~ dnorm(0, 0.1)
+# note in Poisson distribution variance is the mean, so no separate variance/precision
+
+}

@@ -1,0 +1,24 @@
+# Hurdle model with separate regressions for 0's (logistic regression)
+# and positive values (truncated Poisson regression).
+
+model{
+      # truncated Poisson model (no zeros) for data with positive values 
+      for(i in 1:n.positive) { 
+  		  y.positive[i] ~ dpois(lambda.ind[i]) T(1,) 
+			  log(lambda.ind[i]) <- beta[1] + beta[2]*gender.positive[i] 
+            # regression for the truncated Poisson
+      }
+
+      # logistic regression for presence/absence on all data
+			for (i in 1:n) {
+        y.presabs[i]~dbern(p[i]) # model for presence/absence
+        logit(p[i]) <- gamma[1] + gamma[2]*gender[i]
+	    }	
+
+			# Priors 
+      for (j in 1:2) {
+         beta[j] ~ dnorm(0, 0.01) # weak prior on coefs
+         gamma[j] ~ dnorm(0, 0.01)
+      }
+
+}

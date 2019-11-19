@@ -1,0 +1,27 @@
+# poisson-gamma model for hares data for class 14
+
+model {
+  # Likelihood
+  for (i in 1:N) {
+    count1[i] ~ dpois(lambda[i])
+    log(lambda[i]) <- a[site[i]] + log(theta[i])
+    theta[i] ~ dgamma(alpha, alpha) # overdispersion parameter with mean=1
+					# note that since this is on the log scale, 
+					# adding log(theta[i]) is equivalent to 
+					# multiplying by it on the "unlogged" scale
+  }
+
+  for (j in 1:N.sites) {
+    a[j] ~ dnorm(mu.a, tau.a)
+  }
+  # Priors
+  mu.a ~ dnorm(0, 0.001)
+  sigma.a ~ dnorm(0, 0.1)T(0,)
+  tau.a <- pow(sigma.a, -2) # calculate precision 
+  alpha ~ dgamma(1, 1) # prior for overdispersion parameter
+
+  # Calculated values for checking fit
+  for (i in 1:N) {
+    resid[i] <- lambda[i] - count1[i]
+  }
+}

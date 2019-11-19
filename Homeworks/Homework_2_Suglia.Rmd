@@ -98,7 +98,7 @@ They're only correlated a little (0.2); I think this is acceptable
 
 ### First, decide which predictor(s) to include; slope and/or diameter (fixed effects models):
 
-```{r, message+ FALSE}
+```{r, message = FALSE}
 # Let's fit some models and compare them
 
 # Fixed effects only
