@@ -122,7 +122,7 @@ pa = read_csv("patient_age.csv")
 
 # model to put in a txt file:
 model {
-  for(i in 1:n.patients){
+  for(i in 1:n){
     y[i] ~ dnorm(y.hat[i], tau.y)
     y.hat[i] <- a[patient.index[i]] + b*x[i]
   }
@@ -130,7 +130,7 @@ model {
   tau.y <- pow(sigma.y, -2)
   sigma.y ~ dunif(0, 100)
   
-  for(j in 1:n.ages){
+  for(j in 1:n.patients){
     a[j] ~ dnorm(a.hat[j], tau.a)
 a.hat[j] <- g.0 + g.1*age[j]
   }
@@ -141,16 +141,51 @@ a.hat[j] <- g.0 + g.1*age[j]
 }
 
 # data
-im.data <- list(y=im$immune.level, x=im$time, patient.index = im$patient, age=pa$age, n.patients=length(unique(im$patient)), n.ages = length(unique(pa$age)))
+im.data <- list(y=im$immune.level, x=im$time, patient.index = im$patient, age=pa$age, n.patients=length(unique(im$patient)), n = nrow(im))
 
 # now, let jags generate starting values
 im.inits <- list(list(sigma.a = 1, sigma.y=2), list(sigma.a = 2, sigma.y=1), list(sigma.a = 5, sigma.y=0.4))
 im.model <- jags.model("immunity_jags_hw3.txt", data=im.data, inits = im.inits, n.chains=3, n.adapt=1000)
 
 # run it a bit and check convergence
-im.samp <- coda.samples(im.model, c("b", "sigma.y", "tau.a", "sigma.a"), n.iter=1000)
+im.samp <- coda.samples(im.model, c("b", "sigma.a", "sigma.y", "tau.a"), n.iter=1000)
 summary(im.samp)
 par(mar=rep(2, 4))
 plot(im.samp)
 acfplot(im.samp)
 gelman.diag(im.samp)
+
+# now get more samples, this time monitoring all parameters of interest
+im.samp.full <- coda.samples(im.model, c("a", "b", "tau.a", "sigma.a", "sigma.y", "y.hat"), n.iter=5000, thin=5)
+
+# look at the results
+im.summ <- summary(im.samp.full)[1]
+im.stats <- as.data.frame(im.summ$statistics)
+head(im.stats, 100)
+y.hat.rows <- grep("y.hat", rownames(im.stats))
+y.hat <- im.stats$Mean[y.hat.rows] # To get fitted values of the model, look at the stats and pull out the rows corresponding to y.hat
+resids <- im$immune.level - y.hat  
+# for convenience, we can then put those values into our data frame and examine them
+imres <- cbind(im, y.hat = y.hat, resid = resids)
+
+# Some summary statistics:
+# The means and standard deviations of:
+
+# - slope = b
+# - intercept = a
+# - group-level (i.e. among-patient) variance = sigma.a
+# - individual-level (within-patient; individual-data-point-level) variance = sigma.y
+# - y.hat?
+
+woo1 = summary(im.samp.full)[1]
+woo1$statistics[,c('Mean', 'SD')]
+
+# some diagnostic plots
+qqnorm(imres$resid)
+boxplot(resid~patient, data=imres)
+# Now that random intercepts for patient are included in the model, does it look like the residuals differ strongly by patient? 
+
+# Get model DIC
+im.DIC <- dic.samples(im.model, n.iter=5000, thin=5)
+im.DIC
+
